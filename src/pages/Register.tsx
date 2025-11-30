@@ -1,48 +1,50 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Navbar } from "@/components/Navbar";
-import { Mail, Lock, Phone, Scissors, UserCircle, Loader2 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Scissors, Mail, Lock, Phone, UserCircle, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import { Navbar } from '@/components/Navbar';
+import { Footer } from '@/components/Footer';
 
 const Register = () => {
   const navigate = useNavigate();
-  const { register } = useAuth();
+  const location = useLocation();
   const { toast } = useToast();
+  const { isAuthenticated, register, completeOtpRegistration } = useAuth();
+  
+  // Check if coming from OTP login
+  const otpEmail = (location.state as any)?.email || '';
+  const otpCode = (location.state as any)?.otpCode || '';
 
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    password: "",
-    confirmPassword: "",
-    role: "customer" as "customer" | "barber",
-  });
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
+
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState(otpEmail);
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [role, setRole] = useState<'customer' | 'barber'>('customer');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (formData.password !== formData.confirmPassword) {
+    if (!otpCode && password !== confirmPassword) {
       toast({
-        title: "Passwords don't match",
-        description: "Please make sure both passwords are the same.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (formData.password.length < 6) {
-      toast({
-        title: "Password too short",
-        description: "Password must be at least 6 characters long.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Passwords do not match',
+        variant: 'destructive',
       });
       return;
     }
@@ -50,26 +52,24 @@ const Register = () => {
     setIsLoading(true);
 
     try {
-      await register({
-        email: formData.email,
-        password: formData.password,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        phone: formData.phone || undefined,
-        role: formData.role,
-      });
-
+      if (otpCode) {
+        // Complete OTP registration
+        await completeOtpRegistration(email, otpCode, firstName, lastName, phone, role);
+      } else {
+        // Regular registration
+        await register({ email, password, firstName, lastName, phone, role });
+      }
+      
       toast({
-        title: "Welcome to BarberTime!",
-        description: "Your account has been created successfully.",
+        title: 'Success',
+        description: 'Account created successfully!',
       });
-
-      navigate("/");
-    } catch (error) {
+      navigate('/');
+    } catch (error: any) {
       toast({
-        title: "Registration failed",
-        description: error instanceof Error ? error.message : "Please try again",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to create account',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -79,11 +79,14 @@ const Register = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-
-      <div className="flex-1 flex items-center justify-center py-12 px-4 bg-muted/30">
-        <Card className="w-full max-w-md shadow-card">
-          <CardHeader className="text-center">
-            <CardTitle className="text-3xl font-display">Create Account</CardTitle>
+      
+      <main className="flex-1 flex items-center justify-center px-4 py-12 bg-gradient-subtle">
+        <Card className="w-full max-w-md">
+          <CardHeader className="space-y-1 text-center">
+            <div className="flex justify-center mb-4">
+              <Scissors className="w-12 h-12 text-primary" />
+            </div>
+            <CardTitle className="text-3xl font-heading">Create Account</CardTitle>
             <CardDescription>Join BarberTime and start booking</CardDescription>
           </CardHeader>
           <CardContent>
@@ -94,10 +97,9 @@ const Register = () => {
                   <Input
                     id="firstName"
                     placeholder="John"
-                    value={formData.firstName}
-                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
                     required
-                    disabled={isLoading}
                   />
                 </div>
                 <div className="space-y-2">
@@ -105,10 +107,9 @@ const Register = () => {
                   <Input
                     id="lastName"
                     placeholder="Doe"
-                    value={formData.lastName}
-                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    value={lastName}
+                    onChange={(e) => setLastName(e.target.value)}
                     required
-                    disabled={isLoading}
                   />
                 </div>
               </div>
@@ -120,12 +121,12 @@ const Register = () => {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="your@email.com"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="john@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    disabled={!!otpEmail}
                     className="pl-10"
                     required
-                    disabled={isLoading}
                   />
                 </div>
               </div>
@@ -138,56 +139,53 @@ const Register = () => {
                     id="phone"
                     type="tel"
                     placeholder="+31 6 12345678"
-                    value={formData.phone}
-                    onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
                     className="pl-10"
-                    disabled={isLoading}
                   />
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="********"
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    className="pl-10"
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-              </div>
+              {!otpCode && (
+                <>
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="password"
+                        type="password"
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="pl-10"
+                        required
+                      />
+                    </div>
+                  </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm Password</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    placeholder="********"
-                    value={formData.confirmPassword}
-                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                    className="pl-10"
-                    required
-                    disabled={isLoading}
-                  />
-                </div>
-              </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirm Password</Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="confirmPassword"
+                        type="password"
+                        placeholder="••••••••"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="pl-10"
+                        required
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
 
               <div className="space-y-3">
                 <Label>I'm a...</Label>
-                <RadioGroup
-                  value={formData.role}
-                  onValueChange={(value) => setFormData({ ...formData, role: value as "customer" | "barber" })}
-                  disabled={isLoading}
-                >
-                  <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted/50 transition-smooth cursor-pointer">
+                <RadioGroup value={role} onValueChange={(value) => setRole(value as 'customer' | 'barber')}>
+                  <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
                     <RadioGroupItem value="customer" id="customer" />
                     <Label htmlFor="customer" className="flex items-center gap-2 cursor-pointer flex-1">
                       <UserCircle className="w-5 h-5 text-primary" />
@@ -197,7 +195,7 @@ const Register = () => {
                       </div>
                     </Label>
                   </div>
-                  <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted/50 transition-smooth cursor-pointer">
+                  <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer">
                     <RadioGroupItem value="barber" id="barber" />
                     <Label htmlFor="barber" className="flex items-center gap-2 cursor-pointer flex-1">
                       <Scissors className="w-5 h-5 text-barber-red" />
@@ -210,31 +208,26 @@ const Register = () => {
                 </RadioGroup>
               </div>
 
-              <Button type="submit" className="w-full" size="lg" variant="default" disabled={isLoading}>
+              <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 ) : (
-                  "Create Account"
+                  'Create Account'
                 )}
               </Button>
-
-              <div className="text-center text-sm text-muted-foreground">
-                By signing up, you agree to our{" "}
-                <Link to="/terms" className="text-primary hover:underline">
-                  Terms of Service
-                </Link>
-              </div>
             </form>
 
             <div className="mt-6 text-center text-sm">
               <span className="text-muted-foreground">Already have an account? </span>
-              <Link to="/login" className="text-primary font-medium hover:underline">
+              <Link to="/login" className="text-primary font-semibold hover:underline">
                 Sign in
               </Link>
             </div>
           </CardContent>
         </Card>
-      </div>
+      </main>
+
+      <Footer />
     </div>
   );
 };
