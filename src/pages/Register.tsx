@@ -1,14 +1,20 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
-import { Mail, Lock, User, Phone, Scissors, UserCircle } from "lucide-react";
+import { Mail, Lock, Phone, Scissors, UserCircle, Loader2 } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 const Register = () => {
+  const navigate = useNavigate();
+  const { register } = useAuth();
+  const { toast } = useToast();
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -16,19 +22,64 @@ const Register = () => {
     phone: "",
     password: "",
     confirmPassword: "",
-    role: "customer",
+    role: "customer" as "customer" | "barber",
   });
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement registration
-    console.log("Registration:", formData);
+
+    if (formData.password !== formData.confirmPassword) {
+      toast({
+        title: "Passwords don't match",
+        description: "Please make sure both passwords are the same.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 6 characters long.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      await register({
+        email: formData.email,
+        password: formData.password,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone || undefined,
+        role: formData.role,
+      });
+
+      toast({
+        title: "Welcome to BarberTime!",
+        description: "Your account has been created successfully.",
+      });
+
+      navigate("/");
+    } catch (error) {
+      toast({
+        title: "Registration failed",
+        description: error instanceof Error ? error.message : "Please try again",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      
+
       <div className="flex-1 flex items-center justify-center py-12 px-4 bg-muted/30">
         <Card className="w-full max-w-md shadow-card">
           <CardHeader className="text-center">
@@ -46,6 +97,7 @@ const Register = () => {
                     value={formData.firstName}
                     onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
                     required
+                    disabled={isLoading}
                   />
                 </div>
                 <div className="space-y-2">
@@ -56,6 +108,7 @@ const Register = () => {
                     value={formData.lastName}
                     onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
                     required
+                    disabled={isLoading}
                   />
                 </div>
               </div>
@@ -72,6 +125,7 @@ const Register = () => {
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="pl-10"
                     required
+                    disabled={isLoading}
                   />
                 </div>
               </div>
@@ -87,6 +141,7 @@ const Register = () => {
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     className="pl-10"
+                    disabled={isLoading}
                   />
                 </div>
               </div>
@@ -98,11 +153,12 @@ const Register = () => {
                   <Input
                     id="password"
                     type="password"
-                    placeholder="••••••••"
+                    placeholder="********"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     className="pl-10"
                     required
+                    disabled={isLoading}
                   />
                 </div>
               </div>
@@ -114,11 +170,12 @@ const Register = () => {
                   <Input
                     id="confirmPassword"
                     type="password"
-                    placeholder="••••••••"
+                    placeholder="********"
                     value={formData.confirmPassword}
                     onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                     className="pl-10"
                     required
+                    disabled={isLoading}
                   />
                 </div>
               </div>
@@ -127,7 +184,8 @@ const Register = () => {
                 <Label>I'm a...</Label>
                 <RadioGroup
                   value={formData.role}
-                  onValueChange={(value) => setFormData({ ...formData, role: value })}
+                  onValueChange={(value) => setFormData({ ...formData, role: value as "customer" | "barber" })}
+                  disabled={isLoading}
                 >
                   <div className="flex items-center space-x-2 p-3 border rounded-lg hover:bg-muted/50 transition-smooth cursor-pointer">
                     <RadioGroupItem value="customer" id="customer" />
@@ -152,8 +210,12 @@ const Register = () => {
                 </RadioGroup>
               </div>
 
-              <Button type="submit" className="w-full" size="lg" variant="barber">
-                Create Account
+              <Button type="submit" className="w-full" size="lg" variant="default" disabled={isLoading}>
+                {isLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  "Create Account"
+                )}
               </Button>
 
               <div className="text-center text-sm text-muted-foreground">
