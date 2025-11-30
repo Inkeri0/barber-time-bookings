@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { 
   MapPin, Star, Clock, Euro, Phone, Mail, Calendar, 
   CheckCircle, Award, Scissors 
@@ -96,6 +97,7 @@ const mockBarber = {
 
 const BarberProfile = () => {
   const { barberId } = useParams();
+  const { t } = useLanguage();
   const [activeTab, setActiveTab] = useState("services");
 
   return (
