@@ -4,9 +4,12 @@ import { Input } from "@/components/ui/input";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Scissors, Clock, Calendar, Star, Search, MapPin, TrendingUp } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 import heroImage from "@/assets/hero-barber.jpg";
 
 const Index = () => {
+  const { t } = useLanguage();
+  
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -30,10 +33,10 @@ const Index = () => {
         <div className="relative container mx-auto px-4 py-20 md:py-32">
           <div className="max-w-2xl">
             <h1 className="text-4xl md:text-6xl font-display font-bold text-white mb-6 leading-tight">
-              Book Your Barber in <span className="text-cream">Seconds</span>
+              {t('hero.title')}
             </h1>
             <p className="text-lg md:text-xl text-white/90 mb-8">
-              Find professional barbers near you. Book instantly. Pay seamlessly. Get the perfect cut every time.
+              {t('hero.subtitle')}
             </p>
 
             {/* Search Bar */}
@@ -41,14 +44,14 @@ const Index = () => {
               <div className="flex-1 flex items-center gap-2 px-3">
                 <MapPin className="w-5 h-5 text-muted-foreground" />
                 <Input 
-                  placeholder="Enter your city or barber name" 
+                  placeholder={t('hero.searchPlaceholder')}
                   className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
               </div>
               <Link to="/barbers" className="sm:w-auto">
                 <Button variant="hero" size="lg" className="w-full sm:w-auto">
                   <Search className="w-5 h-5" />
-                  Find Barbers
+                  {t('hero.search')}
                 </Button>
               </Link>
             </div>
@@ -77,7 +80,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-display font-bold text-foreground mb-4">
-              How It Works
+              {t('howItWorks.title')}
             </h2>
             <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
               Get your perfect haircut in three simple steps
@@ -95,9 +98,9 @@ const Index = () => {
                   1
                 </div>
               </div>
-              <h3 className="text-xl font-display font-bold mb-3">Find Your Barber</h3>
+              <h3 className="text-xl font-display font-bold mb-3">{t('howItWorks.step1.title')}</h3>
               <p className="text-muted-foreground">
-                Browse professional barbers in your area. Check reviews, services, and prices.
+                {t('howItWorks.step1.desc')}
               </p>
             </div>
 
@@ -111,9 +114,9 @@ const Index = () => {
                   2
                 </div>
               </div>
-              <h3 className="text-xl font-display font-bold mb-3">Book Your Slot</h3>
+              <h3 className="text-xl font-display font-bold mb-3">{t('howItWorks.step2.title')}</h3>
               <p className="text-muted-foreground">
-                Choose your service, pick a convenient time, and secure your booking instantly.
+                {t('howItWorks.step2.desc')}
               </p>
             </div>
 
@@ -127,9 +130,9 @@ const Index = () => {
                   3
                 </div>
               </div>
-              <h3 className="text-xl font-display font-bold mb-3">Get Your Cut</h3>
+              <h3 className="text-xl font-display font-bold mb-3">{t('howItWorks.step3.title')}</h3>
               <p className="text-muted-foreground">
-                Show up at your time, get the perfect cut, and pay the rest at the shop.
+                {t('howItWorks.step3.desc')}
               </p>
             </div>
           </div>
