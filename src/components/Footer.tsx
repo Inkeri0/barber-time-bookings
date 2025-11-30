@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import { Scissors } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export const Footer = () => {
+  const { t } = useLanguage();
   return (
     <footer className="bg-primary text-primary-foreground mt-20">
       <div className="container mx-auto px-4 py-12">
@@ -16,27 +18,27 @@ export const Footer = () => {
               <span className="text-xl font-display font-bold">BarberTime</span>
             </div>
             <p className="text-primary-foreground/80 max-w-sm">
-              Book your perfect haircut in seconds. Connect with professional barbers in your area.
+              {t('footer.tagline')}
             </p>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h3 className="font-display font-bold mb-4">Quick Links</h3>
+            <h3 className="font-display font-bold mb-4">{t('footer.forCustomers')}</h3>
             <ul className="space-y-2">
               <li>
                 <Link to="/barbers" className="text-primary-foreground/80 hover:text-primary-foreground transition-smooth">
-                  Find Barbers
+                  {t('footer.findBarbers')}
                 </Link>
               </li>
               <li>
                 <Link to="/how-it-works" className="text-primary-foreground/80 hover:text-primary-foreground transition-smooth">
-                  How It Works
+                  {t('nav.howItWorks')}
                 </Link>
               </li>
               <li>
                 <Link to="/join-barber" className="text-primary-foreground/80 hover:text-primary-foreground transition-smooth">
-                  Become a Barber
+                  {t('footer.joinBarbers')}
                 </Link>
               </li>
             </ul>
@@ -44,11 +46,11 @@ export const Footer = () => {
 
           {/* Support */}
           <div>
-            <h3 className="font-display font-bold mb-4">Support</h3>
+            <h3 className="font-display font-bold mb-4">{t('footer.company')}</h3>
             <ul className="space-y-2">
               <li>
                 <Link to="/contact" className="text-primary-foreground/80 hover:text-primary-foreground transition-smooth">
-                  Contact Us
+                  {t('footer.contact')}
                 </Link>
               </li>
               <li>
@@ -58,12 +60,12 @@ export const Footer = () => {
               </li>
               <li>
                 <Link to="/terms" className="text-primary-foreground/80 hover:text-primary-foreground transition-smooth">
-                  Terms of Service
+                  {t('footer.terms')}
                 </Link>
               </li>
               <li>
                 <Link to="/privacy" className="text-primary-foreground/80 hover:text-primary-foreground transition-smooth">
-                  Privacy Policy
+                  {t('footer.privacy')}
                 </Link>
               </li>
             </ul>
@@ -71,7 +73,7 @@ export const Footer = () => {
         </div>
 
         <div className="border-t border-primary-foreground/20 mt-8 pt-8 text-center text-primary-foreground/60">
-          <p>&copy; {new Date().getFullYear()} BarberTime. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} BarberTime. {t('footer.rights')}</p>
         </div>
       </div>
     </footer>
