@@ -1,147 +1,165 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Navbar } from "@/components/Navbar";
-import { Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import { useToast } from "@/hooks/use-toast";
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Scissors, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
+import { Navbar } from '@/components/Navbar';
+import { Footer } from '@/components/Footer';
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login, requestOtp, verifyOtp, completeOtpRegistration } = useAuth();
+  const location = useLocation();
   const { toast } = useToast();
+  const { isAuthenticated, login, requestOtp, verifyOtp } = useAuth();
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [otpEmail, setOtpEmail] = useState("");
-  const [otpCode, setOtpCode] = useState("");
-  const [showOtpInput, setShowOtpInput] = useState(false);
-  const [needsRegistration, setNeedsRegistration] = useState(false);
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      const from = (location.state as any)?.from?.pathname || '/';
+      navigate(from, { replace: true });
+    }
+  }, [isAuthenticated, navigate, location]);
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [otpEmail, setOtpEmail] = useState('');
+  const [otpCode, setOtpCode] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpTimer, setOtpTimer] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleEmailLogin = async (e: React.FormEvent) => {
+  const handlePasswordLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
       await login(email, password);
       toast({
-        title: "Welcome back!",
-        description: "You have successfully logged in.",
+        title: 'Success',
+        description: 'Logged in successfully!',
       });
-      navigate("/");
-    } catch (error) {
+      const from = (location.state as any)?.from?.pathname || '/';
+      navigate(from, { replace: true });
+    } catch (error: any) {
       toast({
-        title: "Login failed",
-        description: error instanceof Error ? error.message : "Invalid credentials",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to login',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSendOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSendOtp = async () => {
+    if (!otpEmail) {
+      toast({
+        title: 'Error',
+        description: 'Please enter your email',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const response = await requestOtp(otpEmail);
+      await requestOtp(otpEmail);
+      setOtpSent(true);
+      setOtpTimer(300); // 5 minutes
       toast({
-        title: "Code sent!",
-        description: response.message,
+        title: 'Success',
+        description: 'Verification code sent to your email',
       });
-      setShowOtpInput(true);
-    } catch (error) {
+    } catch (error: any) {
       toast({
-        title: "Failed to send code",
-        description: error instanceof Error ? error.message : "Please try again",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to send verification code',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleVerifyOtp = async () => {
+    if (otpCode.length !== 6) {
+      toast({
+        title: 'Error',
+        description: 'Please enter the 6-digit code',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
       const response = await verifyOtp(otpEmail, otpCode);
-
+      
       if (response.needsRegistration) {
-        setNeedsRegistration(true);
-        toast({
-          title: "Email verified!",
-          description: "Please complete your registration.",
-        });
+        // Redirect to registration to complete profile
+        navigate('/register', { state: { email: otpEmail, otpCode } });
       } else {
         toast({
-          title: "Welcome back!",
-          description: "You have successfully logged in.",
+          title: 'Success',
+          description: 'Logged in successfully!',
         });
-        navigate("/");
+        const from = (location.state as any)?.from?.pathname || '/';
+        navigate(from, { replace: true });
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
-        title: "Verification failed",
-        description: error instanceof Error ? error.message : "Invalid or expired code",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Invalid verification code',
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleCompleteRegistration = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    try {
-      await completeOtpRegistration(otpEmail, otpCode, firstName, lastName);
-      toast({
-        title: "Welcome to BarberTime!",
-        description: "Your account has been created.",
-      });
-      navigate("/");
-    } catch (error) {
-      toast({
-        title: "Registration failed",
-        description: error instanceof Error ? error.message : "Please try again",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
+  // Countdown timer for OTP
+  useEffect(() => {
+    if (otpTimer > 0) {
+      const timer = setTimeout(() => setOtpTimer(otpTimer - 1), 1000);
+      return () => clearTimeout(timer);
     }
+  }, [otpTimer]);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-
-      <div className="flex-1 flex items-center justify-center py-12 px-4 bg-muted/30">
-        <Card className="w-full max-w-md shadow-card">
-          <CardHeader className="text-center">
-            <CardTitle className="text-3xl font-display">Welcome Back</CardTitle>
-            <CardDescription>Sign in to your account to continue</CardDescription>
+      
+      <main className="flex-1 flex items-center justify-center px-4 py-12 bg-gradient-subtle">
+        <Card className="w-full max-w-md">
+          <CardHeader className="space-y-1 text-center">
+            <div className="flex justify-center mb-4">
+              <Scissors className="w-12 h-12 text-primary" />
+            </div>
+            <CardTitle className="text-3xl font-heading">Welcome Back</CardTitle>
+            <CardDescription>Sign in to your BarberTime account</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="email" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-6">
-                <TabsTrigger value="email">Email & Password</TabsTrigger>
+            <Tabs defaultValue="password" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="password">Password</TabsTrigger>
                 <TabsTrigger value="otp">One-Time Code</TabsTrigger>
               </TabsList>
 
-              {/* Email & Password Tab */}
-              <TabsContent value="email">
-                <form onSubmit={handleEmailLogin} className="space-y-4">
+              <TabsContent value="password" className="space-y-4 pt-4">
+                <form onSubmit={handlePasswordLogin} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <div className="relative">
@@ -154,7 +172,6 @@ const Login = () => {
                         onChange={(e) => setEmail(e.target.value)}
                         className="pl-10"
                         required
-                        disabled={isLoading}
                       />
                     </div>
                   </div>
@@ -166,181 +183,108 @@ const Login = () => {
                       <Input
                         id="password"
                         type="password"
-                        placeholder="********"
+                        placeholder="••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         className="pl-10"
                         required
-                        disabled={isLoading}
                       />
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between text-sm">
-                    <Link to="/forgot-password" className="text-primary hover:underline">
-                      Forgot password?
-                    </Link>
-                  </div>
-
-                  <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     ) : (
                       <>
                         Sign In
-                        <ArrowRight className="ml-2 h-4 w-4" />
+                        <ArrowRight className="w-4 h-4 ml-2" />
                       </>
                     )}
                   </Button>
                 </form>
               </TabsContent>
 
-              {/* OTP Tab */}
-              <TabsContent value="otp">
-                {!showOtpInput ? (
-                  <form onSubmit={handleSendOtp} className="space-y-4">
+              <TabsContent value="otp" className="space-y-4 pt-4">
+                {!otpSent ? (
+                  <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="otp-email">Email</Label>
+                      <Label htmlFor="otpEmail">Email</Label>
                       <div className="relative">
                         <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
-                          id="otp-email"
+                          id="otpEmail"
                           type="email"
                           placeholder="your@email.com"
                           value={otpEmail}
                           onChange={(e) => setOtpEmail(e.target.value)}
                           className="pl-10"
                           required
-                          disabled={isLoading}
                         />
                       </div>
                     </div>
 
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      size="lg"
-                      variant="default"
-                      disabled={isLoading}
-                    >
+                    <Button onClick={handleSendOtp} className="w-full" disabled={isLoading}>
                       {isLoading ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       ) : (
-                        "Send Verification Code"
+                        'Send Verification Code'
                       )}
                     </Button>
-                  </form>
-                ) : needsRegistration ? (
-                  <form onSubmit={handleCompleteRegistration} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="firstName">First Name</Label>
-                      <Input
-                        id="firstName"
-                        type="text"
-                        placeholder="John"
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
-                        required
-                        disabled={isLoading}
-                      />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="lastName">Last Name</Label>
-                      <Input
-                        id="lastName"
-                        type="text"
-                        placeholder="Doe"
-                        value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                        required
-                        disabled={isLoading}
-                      />
-                    </div>
-
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      size="lg"
-                      variant="default"
-                      disabled={isLoading}
-                    >
-                      {isLoading ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        "Complete Registration"
-                      )}
-                    </Button>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowOtpInput(false);
-                        setNeedsRegistration(false);
-                        setOtpCode("");
-                      }}
-                      className="w-full text-sm text-primary hover:underline"
-                    >
-                      Use different email
-                    </button>
-                  </form>
+                  </div>
                 ) : (
-                  <form onSubmit={handleVerifyOtp} className="space-y-4">
+                  <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="otp-code">Verification Code</Label>
+                      <Label htmlFor="otpCode">Verification Code</Label>
                       <Input
-                        id="otp-code"
+                        id="otpCode"
                         type="text"
                         placeholder="Enter 6-digit code"
                         value={otpCode}
-                        onChange={(e) => setOtpCode(e.target.value)}
+                        onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                         maxLength={6}
                         required
-                        disabled={isLoading}
                       />
-                      <p className="text-xs text-muted-foreground">
-                        Code sent to {otpEmail}
+                      <p className="text-sm text-muted-foreground">
+                        Code expires in {formatTime(otpTimer)}
                       </p>
                     </div>
 
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      size="lg"
-                      variant="default"
-                      disabled={isLoading}
-                    >
+                    <Button onClick={handleVerifyOtp} className="w-full" disabled={isLoading || otpTimer === 0}>
                       {isLoading ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       ) : (
-                        "Verify & Sign In"
+                        'Verify & Sign In'
                       )}
                     </Button>
 
-                    <button
-                      type="button"
+                    <Button
+                      variant="ghost"
                       onClick={() => {
-                        setShowOtpInput(false);
-                        setOtpCode("");
+                        setOtpSent(false);
+                        setOtpCode('');
+                        setOtpTimer(0);
                       }}
-                      className="w-full text-sm text-primary hover:underline"
+                      className="w-full"
                     >
                       Use different email
-                    </button>
-                  </form>
+                    </Button>
+                  </div>
                 )}
               </TabsContent>
             </Tabs>
 
             <div className="mt-6 text-center text-sm">
               <span className="text-muted-foreground">Don't have an account? </span>
-              <Link to="/register" className="text-primary font-medium hover:underline">
+              <Link to="/register" className="text-primary font-semibold hover:underline">
                 Sign up
               </Link>
             </div>
           </CardContent>
         </Card>
-      </div>
+      </main>
+
+      <Footer />
     </div>
   );
 };
