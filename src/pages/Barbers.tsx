@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MapPin, Star, Search, SlidersHorizontal } from "lucide-react";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 // Mock data - will be replaced with API calls
 const mockBarbers = [
@@ -58,6 +59,7 @@ const mockBarbers = [
 ];
 
 const Barbers = () => {
+  const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCity, setSelectedCity] = useState("all");
   const [sortBy, setSortBy] = useState("rating");
@@ -70,9 +72,9 @@ const Barbers = () => {
         {/* Header */}
         <div className="bg-primary text-primary-foreground py-12">
           <div className="container mx-auto px-4">
-            <h1 className="text-3xl md:text-4xl font-display font-bold mb-4">Find Your Barber</h1>
+            <h1 className="text-3xl md:text-4xl font-display font-bold mb-4">{t('barbers.title')}</h1>
             <p className="text-primary-foreground/90 text-lg">
-              Browse {mockBarbers.length}+ professional barbers in your area
+              {t('barbers.subtitle')}
             </p>
           </div>
         </div>
@@ -85,7 +87,7 @@ const Barbers = () => {
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by name or location..."
+                  placeholder={t('hero.searchPlaceholder')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10"
@@ -96,10 +98,10 @@ const Barbers = () => {
               <Select value={selectedCity} onValueChange={setSelectedCity}>
                 <SelectTrigger className="w-full md:w-48">
                   <MapPin className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Select city" />
+                  <SelectValue placeholder={t('barbers.filterCity')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Cities</SelectItem>
+                  <SelectItem value="all">{t('barbers.allCities')}</SelectItem>
                   <SelectItem value="amsterdam">Amsterdam</SelectItem>
                   <SelectItem value="rotterdam">Rotterdam</SelectItem>
                   <SelectItem value="utrecht">Utrecht</SelectItem>
@@ -111,13 +113,13 @@ const Barbers = () => {
               <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-full md:w-48">
                   <SlidersHorizontal className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Sort by" />
+                  <SelectValue placeholder={t('barbers.sortBy')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="rating">Highest Rated</SelectItem>
-                  <SelectItem value="price-low">Price: Low to High</SelectItem>
-                  <SelectItem value="price-high">Price: High to Low</SelectItem>
-                  <SelectItem value="reviews">Most Reviews</SelectItem>
+                  <SelectItem value="rating">{t('barbers.rating')}</SelectItem>
+                  <SelectItem value="price-low">{t('barbers.price')}: Low to High</SelectItem>
+                  <SelectItem value="price-high">{t('barbers.price')}: High to Low</SelectItem>
+                  <SelectItem value="reviews">{t('barbers.reviews')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -149,7 +151,7 @@ const Barbers = () => {
                       <MapPin className="w-4 h-4" />
                       <span>{barber.city}</span>
                       <span className="text-muted-foreground/50">•</span>
-                      <span>{barber.reviewCount} reviews</span>
+                      <span>{barber.reviewCount} {t('barbers.reviews')}</span>
                     </div>
 
                     <div className="flex flex-wrap gap-2 mb-3">
@@ -162,11 +164,11 @@ const Barbers = () => {
 
                     <div className="flex items-center justify-between pt-3 border-t">
                       <div>
-                        <span className="text-xs text-muted-foreground">Starting from</span>
+                        <span className="text-xs text-muted-foreground">{t('barbers.from')}</span>
                         <p className="text-xl font-bold text-primary">€{barber.startingPrice}</p>
                       </div>
                       <Button variant="barber" size="sm">
-                        Book Now
+                        {t('barberProfile.bookNow')}
                       </Button>
                     </div>
                   </CardContent>

@@ -3,8 +3,11 @@ import { Footer } from "@/components/Footer";
 import { Search, Calendar, Scissors, Star, Shield, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const HowItWorks = () => {
+  const { t } = useLanguage();
+  
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
@@ -15,10 +18,10 @@ const HowItWorks = () => {
           <div className="absolute top-0 left-0 w-full h-2 barber-stripes"></div>
           <div className="container mx-auto px-4 text-center">
             <h1 className="text-4xl md:text-5xl font-display font-bold text-white mb-6">
-              How BarberTime Works
+              {t('howItWorks.page.title')}
             </h1>
             <p className="text-xl text-white/90 max-w-2xl mx-auto">
-              Book your perfect haircut in three simple steps
+              {t('howItWorks.page.subtitle')}
             </p>
           </div>
         </section>
@@ -38,11 +41,9 @@ const HowItWorks = () => {
                       1
                     </div>
                   </div>
-                  <h2 className="text-3xl font-display font-bold mb-4">Find Your Barber</h2>
+                  <h2 className="text-3xl font-display font-bold mb-4">{t('howItWorks.page.step1.title')}</h2>
                   <p className="text-muted-foreground text-lg leading-relaxed">
-                    Browse through hundreds of professional barbers in your area. Filter by location, 
-                    specialty, price, and ratings. Read reviews from real customers to find the perfect 
-                    match for your style.
+                    {t('howItWorks.page.step1.desc')}
                   </p>
                 </div>
                 <div className="md:w-1/2 bg-muted rounded-2xl p-8 aspect-square flex items-center justify-center">
@@ -61,11 +62,9 @@ const HowItWorks = () => {
                       2
                     </div>
                   </div>
-                  <h2 className="text-3xl font-display font-bold mb-4">Book Your Time Slot</h2>
+                  <h2 className="text-3xl font-display font-bold mb-4">{t('howItWorks.page.step2.title')}</h2>
                   <p className="text-muted-foreground text-lg leading-relaxed">
-                    Choose your preferred service, pick a convenient date and time that works for you. 
-                    See real-time availability and secure your spot instantly. You can choose to pay 
-                    the full amount or just a 50% deposit upfront.
+                    {t('howItWorks.page.step2.desc')}
                   </p>
                 </div>
                 <div className="md:w-1/2 bg-muted rounded-2xl p-8 aspect-square flex items-center justify-center">
@@ -84,11 +83,9 @@ const HowItWorks = () => {
                       3
                     </div>
                   </div>
-                  <h2 className="text-3xl font-display font-bold mb-4">Get Your Perfect Cut</h2>
+                  <h2 className="text-3xl font-display font-bold mb-4">{t('howItWorks.page.step4.title')}</h2>
                   <p className="text-muted-foreground text-lg leading-relaxed">
-                    Show up at your scheduled time and enjoy your service. If you paid the 50% deposit, 
-                    simply pay the remaining amount at the shop. After your appointment, leave a review 
-                    to help other customers.
+                    {t('howItWorks.page.step4.desc')}
                   </p>
                 </div>
                 <div className="md:w-1/2 bg-muted rounded-2xl p-8 aspect-square flex items-center justify-center">
@@ -102,7 +99,7 @@ const HowItWorks = () => {
         {/* Benefits */}
         <section className="py-16 bg-muted/50">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-display font-bold text-center mb-12">Why Choose BarberTime?</h2>
+            <h2 className="text-3xl font-display font-bold text-center mb-12">{t('howItWorks.ready')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
               <div className="text-center">
                 <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -138,13 +135,13 @@ const HowItWorks = () => {
         {/* CTA */}
         <section className="py-16">
           <div className="container mx-auto px-4 text-center">
-            <h2 className="text-3xl font-display font-bold mb-6">Ready to Get Started?</h2>
+            <h2 className="text-3xl font-display font-bold mb-6">{t('howItWorks.ready')}</h2>
             <p className="text-muted-foreground text-lg mb-8 max-w-2xl mx-auto">
-              Join thousands of satisfied customers who trust BarberTime for their grooming needs.
+              {t('howItWorks.page.subtitle')}
             </p>
             <Link to="/barbers">
               <Button variant="barber" size="lg">
-                Find Your Barber Now
+                {t('howItWorks.browseBarbers')}
               </Button>
             </Link>
           </div>

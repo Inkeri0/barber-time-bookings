@@ -1,21 +1,24 @@
-import { useState, useEffect } from 'react';
-import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Scissors, Mail, Lock, ArrowRight, Loader2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/contexts/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { Navbar } from '@/components/Navbar';
-import { Footer } from '@/components/Footer';
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { Scissors } from "lucide-react";
 
 const Login = () => {
+  const { login, requestOtp, verifyOtp, isAuthenticated } = useAuth();
+  const { toast } = useToast();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
-  const { toast } = useToast();
-  const { isAuthenticated, login, requestOtp, verifyOtp } = useAuth();
 
   // Redirect if already authenticated
   useEffect(() => {
@@ -25,11 +28,14 @@ const Login = () => {
     }
   }, [isAuthenticated, navigate, location]);
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [otpEmail, setOtpEmail] = useState('');
-  const [otpCode, setOtpCode] = useState('');
+  // Password login state
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  // OTP login state
+  const [otpEmail, setOtpEmail] = useState("");
   const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
   const [otpTimer, setOtpTimer] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -40,15 +46,15 @@ const Login = () => {
     try {
       await login(email, password);
       toast({
-        title: 'Success',
-        description: 'Logged in successfully!',
+        title: t('common.success'),
+        description: t('login.codeSent'),
       });
       const from = (location.state as any)?.from?.pathname || '/';
       navigate(from, { replace: true });
     } catch (error: any) {
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to login',
+        title: t('common.error'),
+        description: error.message || t('login.error'),
         variant: 'destructive',
       });
     } finally {
@@ -57,14 +63,7 @@ const Login = () => {
   };
 
   const handleSendOtp = async () => {
-    if (!otpEmail) {
-      toast({
-        title: 'Error',
-        description: 'Please enter your email',
-        variant: 'destructive',
-      });
-      return;
-    }
+    if (!otpEmail) return;
 
     setIsLoading(true);
 
@@ -73,13 +72,13 @@ const Login = () => {
       setOtpSent(true);
       setOtpTimer(300); // 5 minutes
       toast({
-        title: 'Success',
-        description: 'Verification code sent to your email',
+        title: t('common.success'),
+        description: t('login.codeSent'),
       });
     } catch (error: any) {
       toast({
-        title: 'Error',
-        description: error.message || 'Failed to send verification code',
+        title: t('common.error'),
+        description: error.message || t('login.error'),
         variant: 'destructive',
       });
     } finally {
@@ -90,8 +89,8 @@ const Login = () => {
   const handleVerifyOtp = async () => {
     if (otpCode.length !== 6) {
       toast({
-        title: 'Error',
-        description: 'Please enter the 6-digit code',
+        title: t('common.error'),
+        description: t('login.enterCode'),
         variant: 'destructive',
       });
       return;
@@ -103,20 +102,19 @@ const Login = () => {
       const response = await verifyOtp(otpEmail, otpCode);
       
       if (response.needsRegistration) {
-        // Redirect to registration to complete profile
         navigate('/register', { state: { email: otpEmail, otpCode } });
       } else {
         toast({
-          title: 'Success',
-          description: 'Logged in successfully!',
+          title: t('common.success'),
+          description: t('login.codeSent'),
         });
         const from = (location.state as any)?.from?.pathname || '/';
         navigate(from, { replace: true });
       }
     } catch (error: any) {
       toast({
-        title: 'Error',
-        description: error.message || 'Invalid verification code',
+        title: t('common.error'),
+        description: error.message || t('login.invalidCode'),
         variant: 'destructive',
       });
     } finally {
@@ -124,7 +122,6 @@ const Login = () => {
     }
   };
 
-  // Countdown timer for OTP
   useEffect(() => {
     if (otpTimer > 0) {
       const timer = setTimeout(() => setOtpTimer(otpTimer - 1), 1000);
@@ -141,147 +138,150 @@ const Login = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      
-      <main className="flex-1 flex items-center justify-center px-4 py-12 bg-gradient-subtle">
-        <Card className="w-full max-w-md">
-          <CardHeader className="space-y-1 text-center">
-            <div className="flex justify-center mb-4">
-              <Scissors className="w-12 h-12 text-primary" />
-            </div>
-            <CardTitle className="text-3xl font-heading">Welcome Back</CardTitle>
-            <CardDescription>Sign in to your BarberTime account</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="password" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="password">Password</TabsTrigger>
-                <TabsTrigger value="otp">One-Time Code</TabsTrigger>
-              </TabsList>
 
-              <TabsContent value="password" className="space-y-4 pt-4">
-                <form onSubmit={handlePasswordLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+      <main className="flex-1 flex items-center justify-center px-4 py-12 bg-muted/30">
+        <div className="w-full max-w-md">
+          <Card className="max-w-md w-full shadow-glow">
+            <CardHeader className="text-center">
+              <div className="flex justify-center mb-4">
+                <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center">
+                  <Scissors className="w-8 h-8 text-primary-foreground" />
+                </div>
+              </div>
+              <CardTitle className="text-3xl font-display">{t('login.title')}</CardTitle>
+              <CardDescription>{t('login.subtitle')}</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="password" className="w-full">
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="password">{t('login.emailPassword')}</TabsTrigger>
+                  <TabsTrigger value="otp">{t('login.passwordless')}</TabsTrigger>
+                </TabsList>
+
+                {/* Password Login */}
+                <TabsContent value="password">
+                  <form onSubmit={handlePasswordLogin} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email">{t('login.email')}</Label>
                       <Input
                         id="email"
                         type="email"
-                        placeholder="your@email.com"
+                        placeholder={t('login.emailPlaceholder')}
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10"
                         required
                       />
                     </div>
-                  </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="password">Password</Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <div className="space-y-2">
+                      <Label htmlFor="password">{t('login.password')}</Label>
                       <Input
                         id="password"
                         type="password"
-                        placeholder="••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="pl-10"
                         required
                       />
                     </div>
-                  </div>
 
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    ) : (
-                      <>
-                        Sign In
-                        <ArrowRight className="w-4 h-4 ml-2" />
-                      </>
-                    )}
-                  </Button>
-                </form>
-              </TabsContent>
+                    <div className="text-right">
+                      <Link
+                        to="/forgot-password"
+                        className="text-sm text-primary hover:underline"
+                      >
+                        {t('login.forgotPassword')}
+                      </Link>
+                    </div>
 
-              <TabsContent value="otp" className="space-y-4 pt-4">
-                {!otpSent ? (
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="otpEmail">Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Button type="submit" className="w-full" disabled={isLoading} variant="barber">
+                      {isLoading ? t('common.loading') : t('login.loginButton')}
+                    </Button>
+                  </form>
+                </TabsContent>
+
+                {/* OTP Login */}
+                <TabsContent value="otp">
+                  {!otpSent ? (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="otp-email">{t('login.email')}</Label>
                         <Input
-                          id="otpEmail"
+                          id="otp-email"
                           type="email"
-                          placeholder="your@email.com"
+                          placeholder={t('login.emailPlaceholder')}
                           value={otpEmail}
                           onChange={(e) => setOtpEmail(e.target.value)}
-                          className="pl-10"
                           required
                         />
                       </div>
+
+                      <Button
+                        onClick={handleSendOtp}
+                        className="w-full"
+                        disabled={isLoading || !otpEmail}
+                        variant="barber"
+                      >
+                        {isLoading ? t('common.loading') : t('login.sendCode')}
+                      </Button>
                     </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>{t('login.enterCode')}</Label>
+                        <div className="flex justify-center">
+                          <InputOTP maxLength={6} value={otpCode} onChange={setOtpCode}>
+                            <InputOTPGroup>
+                              <InputOTPSlot index={0} />
+                              <InputOTPSlot index={1} />
+                              <InputOTPSlot index={2} />
+                              <InputOTPSlot index={3} />
+                              <InputOTPSlot index={4} />
+                              <InputOTPSlot index={5} />
+                            </InputOTPGroup>
+                          </InputOTP>
+                        </div>
+                        {otpTimer > 0 && (
+                          <p className="text-sm text-center text-muted-foreground">
+                            {t('login.code')}: {formatTime(otpTimer)}
+                          </p>
+                        )}
+                      </div>
 
-                    <Button onClick={handleSendOtp} className="w-full" disabled={isLoading}>
-                      {isLoading ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        'Send Verification Code'
+                      <Button
+                        onClick={handleVerifyOtp}
+                        className="w-full"
+                        disabled={isLoading || otpCode.length !== 6}
+                        variant="barber"
+                      >
+                        {isLoading ? t('common.loading') : t('login.verify')}
+                      </Button>
+
+                      {otpTimer === 0 && (
+                        <Button
+                          onClick={() => {
+                            setOtpSent(false);
+                            setOtpCode("");
+                          }}
+                          variant="ghost"
+                          className="w-full"
+                        >
+                          {t('login.resend')}
+                        </Button>
                       )}
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="otpCode">Verification Code</Label>
-                      <Input
-                        id="otpCode"
-                        type="text"
-                        placeholder="Enter 6-digit code"
-                        value={otpCode}
-                        onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                        maxLength={6}
-                        required
-                      />
-                      <p className="text-sm text-muted-foreground">
-                        Code expires in {formatTime(otpTimer)}
-                      </p>
                     </div>
+                  )}
+                </TabsContent>
+              </Tabs>
 
-                    <Button onClick={handleVerifyOtp} className="w-full" disabled={isLoading || otpTimer === 0}>
-                      {isLoading ? (
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      ) : (
-                        'Verify & Sign In'
-                      )}
-                    </Button>
-
-                    <Button
-                      variant="ghost"
-                      onClick={() => {
-                        setOtpSent(false);
-                        setOtpCode('');
-                        setOtpTimer(0);
-                      }}
-                      className="w-full"
-                    >
-                      Use different email
-                    </Button>
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
-
-            <div className="mt-6 text-center text-sm">
-              <span className="text-muted-foreground">Don't have an account? </span>
-              <Link to="/register" className="text-primary font-semibold hover:underline">
-                Sign up
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+              <div className="mt-6 text-center text-sm">
+                <span className="text-muted-foreground">{t('login.noAccount')} </span>
+                <Link to="/register" className="text-primary hover:underline font-medium">
+                  {t('login.signUpHere')}
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </main>
 
       <Footer />
