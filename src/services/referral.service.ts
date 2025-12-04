@@ -1,10 +1,18 @@
 import api from '@/lib/api';
 
 export interface ReferralCode {
-  code: string;
-  shareUrl: string;
-  totalReferrals: number;
-  completedReferrals: number;
+  referralCode: string;
+  shareLink: string;
+  successfulReferrals: number;
+  pendingReferrals: number;
+  progressToFreeHaircut: number;
+  referralsNeededForFreeHaircut: number;
+  creditBalance: number;
+  // Mapped properties for UI compatibility
+  code?: string;
+  shareUrl?: string;
+  totalReferrals?: number;
+  completedReferrals?: number;
 }
 
 export interface Referral {
@@ -33,7 +41,15 @@ export interface LeaderboardEntry {
 
 export const referralService = {
   getMyCode: async (): Promise<ReferralCode> => {
-    return api.get<ReferralCode>('/referrals/my-code');
+    const data = await api.get<ReferralCode>('/referrals/my-code');
+    // Map to UI-friendly names
+    return {
+      ...data,
+      code: data.referralCode,
+      shareUrl: data.shareLink,
+      totalReferrals: data.successfulReferrals + data.pendingReferrals,
+      completedReferrals: data.successfulReferrals,
+    };
   },
 
   applyCode: async (code: string): Promise<{ message: string; discount?: number }> => {
@@ -41,11 +57,13 @@ export const referralService = {
   },
 
   getMyReferrals: async (): Promise<Referral[]> => {
-    return api.get<Referral[]>('/referrals/my-referrals');
+    const data = await api.get<{ referrals: Referral[]; pagination: unknown }>('/referrals/my-referrals');
+    return data.referrals || [];
   },
 
   getRewards: async (): Promise<ReferralReward[]> => {
-    return api.get<ReferralReward[]>('/referrals/rewards');
+    const data = await api.get<{ available: ReferralReward[]; used: ReferralReward[]; totalAvailableValue: number }>('/referrals/rewards');
+    return [...(data.available || []), ...(data.used || []).map(r => ({ ...r, isRedeemed: true }))];
   },
 
   useReward: async (rewardId: string): Promise<{ message: string }> => {
@@ -53,7 +71,12 @@ export const referralService = {
   },
 
   getLeaderboard: async (): Promise<LeaderboardEntry[]> => {
-    return api.get<LeaderboardEntry[]>('/referrals/leaderboard');
+    try {
+      return await api.get<LeaderboardEntry[]>('/referrals/leaderboard');
+    } catch {
+      // Return empty array if leaderboard fails
+      return [];
+    }
   },
 };
 

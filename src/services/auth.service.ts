@@ -12,7 +12,7 @@ export interface User {
 }
 
 export interface LoginResponse {
-  access_token: string;
+  accessToken: string;
   user: User;
 }
 
@@ -26,7 +26,7 @@ export interface OtpVerifyResponse {
   needsRegistration: boolean;
   email: string;
   message: string;
-  access_token?: string;
+  accessToken?: string;
   user?: User;
 }
 
@@ -44,8 +44,8 @@ export const authService = {
   // Email + Password login
   login: async (email: string, password: string): Promise<LoginResponse> => {
     const response = await api.post<LoginResponse>('/auth/login', { email, password });
-    if (response.access_token) {
-      localStorage.setItem('token', response.access_token);
+    if (response.accessToken) {
+      localStorage.setItem('token', response.accessToken);
       localStorage.setItem('user', JSON.stringify(response.user));
     }
     return response;
@@ -54,8 +54,8 @@ export const authService = {
   // Register new user
   register: async (data: RegisterData): Promise<LoginResponse> => {
     const response = await api.post<LoginResponse>('/auth/register', data);
-    if (response.access_token) {
-      localStorage.setItem('token', response.access_token);
+    if (response.accessToken) {
+      localStorage.setItem('token', response.accessToken);
       localStorage.setItem('user', JSON.stringify(response.user));
     }
     return response;
@@ -69,8 +69,8 @@ export const authService = {
   // Verify OTP code
   verifyOtp: async (email: string, code: string): Promise<OtpVerifyResponse> => {
     const response = await api.post<OtpVerifyResponse>('/auth/otp/verify', { email, code });
-    if (response.access_token) {
-      localStorage.setItem('token', response.access_token);
+    if (response.accessToken) {
+      localStorage.setItem('token', response.accessToken);
       localStorage.setItem('user', JSON.stringify(response.user));
     }
     return response;
@@ -93,8 +93,8 @@ export const authService = {
       phone,
       role,
     });
-    if (response.access_token) {
-      localStorage.setItem('token', response.access_token);
+    if (response.accessToken) {
+      localStorage.setItem('token', response.accessToken);
       localStorage.setItem('user', JSON.stringify(response.user));
     }
     return response;
