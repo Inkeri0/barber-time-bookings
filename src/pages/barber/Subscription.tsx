@@ -18,20 +18,21 @@ import { Check, X, Crown, Zap, Star, Clock, Download, AlertTriangle } from 'luci
 import { format, differenceInDays } from 'date-fns';
 
 // Helper to convert features object to displayable array
-const getFeaturesList = (features: PlanFeatures, t: (key: string) => string): string[] => {
+const getFeaturesList = (features: PlanFeatures | undefined, t: (key: string) => string): string[] => {
+  if (!features) return [];
   const list: string[] = [];
 
   // Appointments
   if (features.maxAppointmentsPerMonth === -1) {
     list.push(t('subscription.feature.unlimitedAppointments'));
-  } else {
+  } else if (features.maxAppointmentsPerMonth) {
     list.push(`${features.maxAppointmentsPerMonth} ${t('subscription.feature.appointmentsMonth')}`);
   }
 
   // Services
   if (features.maxServices === -1) {
     list.push(t('subscription.feature.unlimitedServices'));
-  } else {
+  } else if (features.maxServices) {
     list.push(`${features.maxServices} ${t('subscription.feature.services')}`);
   }
 
@@ -229,7 +230,8 @@ const Subscription = () => {
     return <Badge variant={config.variant}>{config.label}</Badge>;
   };
 
-  const getPlanIcon = (name: string) => {
+  const getPlanIcon = (name: string | undefined) => {
+    if (!name) return <Zap className="h-6 w-6" />;
     const normalizedName = name.toLowerCase().replace(' ', '_');
     switch (normalizedName) {
       case 'free_trial': return <Clock className="h-6 w-6" />;
@@ -241,7 +243,8 @@ const Subscription = () => {
   };
 
   // Helper to get plan translation key from name
-  const getPlanTranslationKey = (name: string) => {
+  const getPlanTranslationKey = (name: string | undefined) => {
+    if (!name) return 'subscription.plan.basic';
     const normalizedName = name.toLowerCase().replace(' ', '_');
     return `subscription.plan.${normalizedName}`;
   };
@@ -281,14 +284,14 @@ const Subscription = () => {
               {/* Current Plan Status */}
               {subscriptionLoading ? (
                 <Skeleton className="h-32 w-full" />
-              ) : currentSubscription && (
+              ) : currentSubscription && currentSubscription.plan && (
                 <Card className="border-primary">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
                         {getPlanIcon(currentSubscription.plan.name)}
                         <div>
-                          <CardTitle className="capitalize">{t(`subscription.plan.${currentSubscription.plan.name}`)}</CardTitle>
+                          <CardTitle className="capitalize">{t(getPlanTranslationKey(currentSubscription.plan.name))}</CardTitle>
                           <CardDescription>{t('subscription.currentPlan')}</CardDescription>
                         </div>
                       </div>
@@ -317,7 +320,7 @@ const Subscription = () => {
                       </div>
                     </div>
                   </CardContent>
-                  {currentSubscription.status === 'active' && currentSubscription.plan.name !== 'free_trial' && (
+                  {currentSubscription.status === 'active' && currentSubscription.plan?.name !== 'free_trial' && currentSubscription.planId !== 'free_trial' && (
                     <CardFooter>
                       <Button variant="outline" onClick={() => setCancelDialogOpen(true)}>
                         {t('subscription.cancelPlan')}
@@ -382,9 +385,9 @@ const Subscription = () => {
                               </li>
                             ))}
                             {/* Show what's not included */}
-                            {!plan.features.promotions && <li className="flex items-center gap-2 text-muted-foreground"><X className="h-4 w-4" /><span className="text-sm">{t('subscription.feature.promos')}</span></li>}
-                            {!plan.features.loyaltyProgram && <li className="flex items-center gap-2 text-muted-foreground"><X className="h-4 w-4" /><span className="text-sm">{t('subscription.feature.loyalty')}</span></li>}
-                            {!plan.features.productSales && <li className="flex items-center gap-2 text-muted-foreground"><X className="h-4 w-4" /><span className="text-sm">{t('subscription.feature.productSales')}</span></li>}
+                            {plan.features && !plan.features.promotions && <li className="flex items-center gap-2 text-muted-foreground"><X className="h-4 w-4" /><span className="text-sm">{t('subscription.feature.promos')}</span></li>}
+                            {plan.features && !plan.features.loyaltyProgram && <li className="flex items-center gap-2 text-muted-foreground"><X className="h-4 w-4" /><span className="text-sm">{t('subscription.feature.loyalty')}</span></li>}
+                            {plan.features && !plan.features.productSales && <li className="flex items-center gap-2 text-muted-foreground"><X className="h-4 w-4" /><span className="text-sm">{t('subscription.feature.productSales')}</span></li>}
                           </ul>
                         </CardContent>
                         <CardFooter>
