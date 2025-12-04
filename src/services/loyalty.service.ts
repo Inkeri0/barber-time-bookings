@@ -43,6 +43,36 @@ export interface LoyaltySettings {
   rewards: LoyaltyReward[];
 }
 
+// Backend response types
+interface BackendLoyaltySettings {
+  id: string;
+  barberId: string;
+  enabled: boolean;
+  pointsPerEuro: number;
+  welcomeBonus: number;
+  pointsToEuroRatio: number;
+  minimumRedemption: number;
+  maxRedemptionPercent: number;
+  birthdayBonus: number;
+  pointsExpirationDays: number;
+  doublePointsDays: string[] | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface BackendMembersResponse {
+  members: LoyaltyMember[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+  summary: {
+    totalMembers: number;
+  };
+}
+
 export interface LoyaltyMember {
   id: string;
   customerId: string;
@@ -82,15 +112,41 @@ export const loyaltyService = {
 
   // Barber endpoints
   getSettings: async (): Promise<LoyaltySettings> => {
-    return api.get<LoyaltySettings>('/loyalty/settings');
+    const response = await api.get<BackendLoyaltySettings>('/loyalty/settings');
+    // Transform backend response to frontend format
+    return {
+      isEnabled: response.enabled ?? false,
+      pointsPerEuro: response.pointsPerEuro ?? 1,
+      welcomeBonus: response.welcomeBonus ?? 10,
+      tierThresholds: {
+        silver: 100,  // Backend doesn't have tiers, use defaults
+        gold: 300,
+        platinum: 600,
+      },
+      rewards: [], // Backend stores rewards separately
+    };
   },
 
   updateSettings: async (settings: Partial<LoyaltySettings>): Promise<LoyaltySettings> => {
-    return api.put<LoyaltySettings>('/loyalty/settings', settings);
+    // Transform frontend format to backend format
+    const backendSettings = {
+      enabled: settings.isEnabled,
+      pointsPerEuro: settings.pointsPerEuro,
+      welcomeBonus: settings.welcomeBonus,
+    };
+    const response = await api.put<BackendLoyaltySettings>('/loyalty/settings', backendSettings);
+    return {
+      isEnabled: response.enabled ?? false,
+      pointsPerEuro: response.pointsPerEuro ?? 1,
+      welcomeBonus: response.welcomeBonus ?? 10,
+      tierThresholds: settings.tierThresholds ?? { silver: 100, gold: 300, platinum: 600 },
+      rewards: settings.rewards ?? [],
+    };
   },
 
   getMembers: async (): Promise<LoyaltyMember[]> => {
-    return api.get<LoyaltyMember[]>('/loyalty/members');
+    const response = await api.get<BackendMembersResponse>('/loyalty/members');
+    return response.members || [];
   },
 
   createReward: async (reward: Omit<LoyaltyReward, 'id'>): Promise<LoyaltyReward> => {
