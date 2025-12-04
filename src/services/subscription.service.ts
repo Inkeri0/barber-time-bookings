@@ -54,6 +54,16 @@ export interface SubscribeResponse {
   message: string;
 }
 
+interface InvoicesResponse {
+  invoices: Invoice[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
 // Subscription API methods
 export const subscriptionService = {
   getPlans: async (): Promise<SubscriptionPlan[]> => {
@@ -77,7 +87,8 @@ export const subscriptionService = {
   },
 
   getInvoices: async (): Promise<Invoice[]> => {
-    return api.get<Invoice[]>('/subscriptions/invoices');
+    const response = await api.get<InvoicesResponse>('/subscriptions/invoices');
+    return response.invoices || [];
   },
 };
 
