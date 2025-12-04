@@ -1,19 +1,27 @@
 import api from '@/lib/api';
 
-// Types
+// Types - matches backend response
+export interface PlanFeatures {
+  maxServices: number;
+  maxAppointmentsPerMonth: number;
+  analytics: 'basic' | 'advanced';
+  loyaltyProgram: boolean;
+  socialMediaPosting: boolean;
+  productSales: boolean;
+  prioritySupport: boolean;
+  customBranding: boolean;
+  promotions: boolean;
+  waitlist: boolean;
+}
+
 export interface SubscriptionPlan {
   id: string;
-  name: 'free_trial' | 'basic' | 'pro' | 'premium';
+  name: string;
   monthlyPrice: number;
   yearlyPrice: number;
-  features: string[];
-  appointmentsLimit: number | null;
-  hasPromos: boolean;
-  hasWaitlist: boolean;
-  hasLoyalty: boolean;
-  hasPrioritySupport: boolean;
-  hasProductSales: boolean;
-  hasSocialPosting: boolean;
+  yearlySavings?: number;
+  features: PlanFeatures;
+  isPopular?: boolean;
 }
 
 export interface Subscription {

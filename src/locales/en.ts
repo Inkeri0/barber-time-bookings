@@ -223,6 +223,15 @@ export default {
   'subscription.feature.promos': 'Promotions',
   'subscription.feature.loyalty': 'Loyalty Program',
   'subscription.feature.productSales': 'Product Sales',
+  'subscription.feature.appointmentsMonth': 'appointments/month',
+  'subscription.feature.unlimitedAppointments': 'Unlimited appointments',
+  'subscription.feature.services': 'services',
+  'subscription.feature.unlimitedServices': 'Unlimited services',
+  'subscription.feature.waitlist': 'Waitlist management',
+  'subscription.feature.prioritySupport': 'Priority support',
+  'subscription.feature.socialMedia': 'Social media posting',
+  'subscription.feature.customBranding': 'Custom branding',
+  'subscription.feature.advancedAnalytics': 'Advanced analytics',
 
   // Referral
   'referral.title': 'Refer & Earn',

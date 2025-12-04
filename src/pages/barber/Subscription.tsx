@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { subscriptionService, SubscriptionPlan, Subscription as SubscriptionType, Invoice } from '@/services/subscription.service';
+import { subscriptionService, SubscriptionPlan, Subscription as SubscriptionType, Invoice, PlanFeatures } from '@/services/subscription.service';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -17,63 +17,114 @@ import { useToast } from '@/hooks/use-toast';
 import { Check, X, Crown, Zap, Star, Clock, Download, AlertTriangle } from 'lucide-react';
 import { format, differenceInDays } from 'date-fns';
 
-// Mock data for development
+// Helper to convert features object to displayable array
+const getFeaturesList = (features: PlanFeatures, t: (key: string) => string): string[] => {
+  const list: string[] = [];
+
+  // Appointments
+  if (features.maxAppointmentsPerMonth === -1) {
+    list.push(t('subscription.feature.unlimitedAppointments'));
+  } else {
+    list.push(`${features.maxAppointmentsPerMonth} ${t('subscription.feature.appointmentsMonth')}`);
+  }
+
+  // Services
+  if (features.maxServices === -1) {
+    list.push(t('subscription.feature.unlimitedServices'));
+  } else {
+    list.push(`${features.maxServices} ${t('subscription.feature.services')}`);
+  }
+
+  // Boolean features
+  if (features.promotions) list.push(t('subscription.feature.promos'));
+  if (features.waitlist) list.push(t('subscription.feature.waitlist'));
+  if (features.loyaltyProgram) list.push(t('subscription.feature.loyalty'));
+  if (features.prioritySupport) list.push(t('subscription.feature.prioritySupport'));
+  if (features.productSales) list.push(t('subscription.feature.productSales'));
+  if (features.socialMediaPosting) list.push(t('subscription.feature.socialMedia'));
+  if (features.customBranding) list.push(t('subscription.feature.customBranding'));
+  if (features.analytics === 'advanced') list.push(t('subscription.feature.advancedAnalytics'));
+
+  return list;
+};
+
+// Mock data for development (matching backend format)
 const mockPlans: SubscriptionPlan[] = [
   {
     id: 'free_trial',
-    name: 'free_trial',
+    name: 'Free Trial',
     monthlyPrice: 0,
     yearlyPrice: 0,
-    features: ['60-day trial', '50 appointments/month', 'Basic scheduling', 'Email support'],
-    appointmentsLimit: 50,
-    hasPromos: false,
-    hasWaitlist: false,
-    hasLoyalty: false,
-    hasPrioritySupport: false,
-    hasProductSales: false,
-    hasSocialPosting: false,
+    features: {
+      maxServices: 5,
+      maxAppointmentsPerMonth: 50,
+      analytics: 'basic',
+      loyaltyProgram: false,
+      socialMediaPosting: false,
+      productSales: false,
+      prioritySupport: false,
+      customBranding: false,
+      promotions: false,
+      waitlist: false,
+    },
+    isPopular: false,
   },
   {
     id: 'basic',
-    name: 'basic',
+    name: 'Basic',
     monthlyPrice: 19,
     yearlyPrice: 190,
-    features: ['150 appointments/month', 'Promotions', 'Waitlist management', 'Email support'],
-    appointmentsLimit: 150,
-    hasPromos: true,
-    hasWaitlist: true,
-    hasLoyalty: false,
-    hasPrioritySupport: false,
-    hasProductSales: false,
-    hasSocialPosting: false,
+    features: {
+      maxServices: 10,
+      maxAppointmentsPerMonth: 150,
+      analytics: 'basic',
+      loyaltyProgram: false,
+      socialMediaPosting: false,
+      productSales: false,
+      prioritySupport: false,
+      customBranding: false,
+      promotions: true,
+      waitlist: true,
+    },
+    isPopular: false,
   },
   {
     id: 'pro',
-    name: 'pro',
+    name: 'Pro',
     monthlyPrice: 29,
     yearlyPrice: 290,
-    features: ['500 appointments/month', 'Loyalty program', 'Priority support', 'Analytics dashboard'],
-    appointmentsLimit: 500,
-    hasPromos: true,
-    hasWaitlist: true,
-    hasLoyalty: true,
-    hasPrioritySupport: true,
-    hasProductSales: false,
-    hasSocialPosting: false,
+    features: {
+      maxServices: 25,
+      maxAppointmentsPerMonth: 500,
+      analytics: 'advanced',
+      loyaltyProgram: true,
+      socialMediaPosting: false,
+      productSales: false,
+      prioritySupport: true,
+      customBranding: true,
+      promotions: true,
+      waitlist: true,
+    },
+    isPopular: true,
   },
   {
     id: 'premium',
-    name: 'premium',
+    name: 'Premium',
     monthlyPrice: 49,
     yearlyPrice: 490,
-    features: ['Unlimited appointments', 'Product sales', 'Social media posting', 'All features included'],
-    appointmentsLimit: null,
-    hasPromos: true,
-    hasWaitlist: true,
-    hasLoyalty: true,
-    hasPrioritySupport: true,
-    hasProductSales: true,
-    hasSocialPosting: true,
+    features: {
+      maxServices: -1,
+      maxAppointmentsPerMonth: -1,
+      analytics: 'advanced',
+      loyaltyProgram: true,
+      socialMediaPosting: true,
+      productSales: true,
+      prioritySupport: true,
+      customBranding: true,
+      promotions: true,
+      waitlist: true,
+    },
+    isPopular: false,
   },
 ];
 
@@ -179,13 +230,20 @@ const Subscription = () => {
   };
 
   const getPlanIcon = (name: string) => {
-    switch (name) {
+    const normalizedName = name.toLowerCase().replace(' ', '_');
+    switch (normalizedName) {
       case 'free_trial': return <Clock className="h-6 w-6" />;
       case 'basic': return <Zap className="h-6 w-6" />;
       case 'pro': return <Star className="h-6 w-6" />;
       case 'premium': return <Crown className="h-6 w-6" />;
       default: return <Zap className="h-6 w-6" />;
     }
+  };
+
+  // Helper to get plan translation key from name
+  const getPlanTranslationKey = (name: string) => {
+    const normalizedName = name.toLowerCase().replace(' ', '_');
+    return `subscription.plan.${normalizedName}`;
   };
 
   const trialDaysRemaining = currentSubscription?.trialEndsAt
@@ -295,7 +353,8 @@ const Subscription = () => {
                   {plans.map((plan) => {
                     const isCurrent = currentSubscription?.planId === plan.id;
                     const price = yearlyBilling ? plan.yearlyPrice : plan.monthlyPrice;
-                    const isPopular = plan.name === 'pro';
+                    const isPopular = plan.isPopular || plan.name === 'Pro';
+                    const featuresList = getFeaturesList(plan.features, t);
 
                     return (
                       <Card key={plan.id} className={`relative ${isPopular ? 'border-primary shadow-lg' : ''} ${isCurrent ? 'ring-2 ring-primary' : ''}`}>
@@ -306,26 +365,26 @@ const Subscription = () => {
                         )}
                         <CardHeader className="text-center">
                           <div className="mx-auto mb-2 text-primary">{getPlanIcon(plan.name)}</div>
-                          <CardTitle className="capitalize">{t(`subscription.plan.${plan.name}`)}</CardTitle>
+                          <CardTitle>{t(getPlanTranslationKey(plan.name)) || plan.name}</CardTitle>
                           <div className="mt-4">
                             <span className="text-4xl font-bold">€{price}</span>
-                            {plan.name !== 'free_trial' && (
+                            {plan.id !== 'free_trial' && (
                               <span className="text-muted-foreground">/{yearlyBilling ? t('subscription.year') : t('subscription.month')}</span>
                             )}
                           </div>
                         </CardHeader>
                         <CardContent>
                           <ul className="space-y-3">
-                            {plan.features.map((feature, idx) => (
+                            {featuresList.map((feature, idx) => (
                               <li key={idx} className="flex items-center gap-2">
                                 <Check className="h-4 w-4 text-green-500 shrink-0" />
                                 <span className="text-sm">{feature}</span>
                               </li>
                             ))}
                             {/* Show what's not included */}
-                            {!plan.hasPromos && <li className="flex items-center gap-2 text-muted-foreground"><X className="h-4 w-4" /><span className="text-sm">{t('subscription.feature.promos')}</span></li>}
-                            {!plan.hasLoyalty && <li className="flex items-center gap-2 text-muted-foreground"><X className="h-4 w-4" /><span className="text-sm">{t('subscription.feature.loyalty')}</span></li>}
-                            {!plan.hasProductSales && <li className="flex items-center gap-2 text-muted-foreground"><X className="h-4 w-4" /><span className="text-sm">{t('subscription.feature.productSales')}</span></li>}
+                            {!plan.features.promotions && <li className="flex items-center gap-2 text-muted-foreground"><X className="h-4 w-4" /><span className="text-sm">{t('subscription.feature.promos')}</span></li>}
+                            {!plan.features.loyaltyProgram && <li className="flex items-center gap-2 text-muted-foreground"><X className="h-4 w-4" /><span className="text-sm">{t('subscription.feature.loyalty')}</span></li>}
+                            {!plan.features.productSales && <li className="flex items-center gap-2 text-muted-foreground"><X className="h-4 w-4" /><span className="text-sm">{t('subscription.feature.productSales')}</span></li>}
                           </ul>
                         </CardContent>
                         <CardFooter>

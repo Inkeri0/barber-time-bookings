@@ -223,6 +223,15 @@ export default {
   'subscription.feature.promos': 'Promoties',
   'subscription.feature.loyalty': 'Loyaliteitsprogramma',
   'subscription.feature.productSales': 'Productverkoop',
+  'subscription.feature.appointmentsMonth': 'afspraken/maand',
+  'subscription.feature.unlimitedAppointments': 'Onbeperkte afspraken',
+  'subscription.feature.services': 'diensten',
+  'subscription.feature.unlimitedServices': 'Onbeperkte diensten',
+  'subscription.feature.waitlist': 'Wachtlijstbeheer',
+  'subscription.feature.prioritySupport': 'Prioriteitsondersteuning',
+  'subscription.feature.socialMedia': 'Social media posting',
+  'subscription.feature.customBranding': 'Aangepaste branding',
+  'subscription.feature.advancedAnalytics': 'Geavanceerde analytics',
 
   // Referral
   'referral.title': 'Verwijs & Verdien',
