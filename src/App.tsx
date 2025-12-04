@@ -16,6 +16,14 @@ import BarberProfile from "./pages/BarberProfile";
 import HowItWorks from "./pages/HowItWorks";
 import NotFound from "./pages/NotFound";
 import Subscription from "./pages/barber/Subscription";
+import StudentVerification from "./pages/StudentVerification";
+import Referrals from "./pages/Referrals";
+import Loyalty from "./pages/Loyalty";
+import LoyaltySettings from "./pages/barber/LoyaltySettings";
+import Analytics from "./pages/barber/Analytics";
+import Waitlist from "./pages/Waitlist";
+import Promotions from "./pages/barber/Promotions";
+import Shop from "./pages/Shop";
 
 const queryClient = new QueryClient();
 
@@ -36,7 +44,16 @@ const App = () => (
               <Route path="/barbers" element={<Barbers />} />
               <Route path="/barbers/:barberId" element={<BarberProfile />} />
               <Route path="/how-it-works" element={<HowItWorks />} />
+              {/* New Feature Routes */}
               <Route path="/subscription" element={<ProtectedRoute><Subscription /></ProtectedRoute>} />
+              <Route path="/student-verification" element={<ProtectedRoute><StudentVerification /></ProtectedRoute>} />
+              <Route path="/referrals" element={<ProtectedRoute><Referrals /></ProtectedRoute>} />
+              <Route path="/loyalty" element={<ProtectedRoute><Loyalty /></ProtectedRoute>} />
+              <Route path="/barber/loyalty" element={<ProtectedRoute><LoyaltySettings /></ProtectedRoute>} />
+              <Route path="/barber/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+              <Route path="/waitlist" element={<ProtectedRoute><Waitlist /></ProtectedRoute>} />
+              <Route path="/barber/promotions" element={<ProtectedRoute><Promotions /></ProtectedRoute>} />
+              <Route path="/shop/:barberId" element={<Shop />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
