@@ -36,18 +36,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     // Check for existing session on mount
-    const storedUser = authService.getStoredUser();
-    if (storedUser && authService.isAuthenticated()) {
-      setUser(storedUser);
-      // Optionally verify token is still valid
-      authService.getProfile()
-        .then(setUser)
-        .catch(() => {
+    const checkAuth = async () => {
+      const storedUser = authService.getStoredUser();
+      if (storedUser && authService.isAuthenticated()) {
+        try {
+          // Verify token is still valid
+          const profile = await authService.getProfile();
+          setUser(profile);
+        } catch {
+          // Token is invalid or expired
           authService.logout();
           setUser(null);
-        });
-    }
-    setIsLoading(false);
+        }
+      }
+      setIsLoading(false);
+    };
+    checkAuth();
   }, []);
 
   const login = async (email: string, password: string) => {
